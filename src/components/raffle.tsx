@@ -14,7 +14,7 @@ export function Raffle(){
         txn.callFunction({
             address: MODULE_ADDRESS,
             module: "raffle",
-            function: "get_check_in_raffle_by_fate",
+            function: "get_check_in_raffle_by_fate_v1",
             args: [],
         });
     
@@ -43,7 +43,7 @@ export function Raffle(){
         txn.callFunction({
             address: MODULE_ADDRESS,
             module: "raffle",
-            function: "claim_max_raffle",
+            function: "claim_max_raffle_v1",
             args: [],
         });
         const result = await signAndExecuteTransaction({ transaction: txn });
@@ -57,7 +57,7 @@ export function Raffle(){
         const result = await client.executeViewFunction({
             address: MODULE_ADDRESS,
             module: "raffle",
-            function: "query_check_in_raffle_view",
+            function: "query_check_in_raffle_view_v1",
             args: [],
         }) as any;
         console.log(result?.return_values[0]?.decoded_value?.value);
@@ -69,7 +69,7 @@ export function Raffle(){
         const result = await client.executeViewFunction({
             address: MODULE_ADDRESS,
             module: "raffle",
-            function: "query_check_in_raffle_record_view",
+            function: "query_check_in_raffle_record_view_v1",
             args: [
                 Args.address(address),
             ],

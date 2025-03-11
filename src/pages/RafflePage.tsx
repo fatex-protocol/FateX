@@ -114,7 +114,7 @@ const RaffleMessage = styled(Box)<RaffleMessageProps>(({ type }) => ({
 }));
 
 function RafflePage() {
-  const [isFeatureEnabled] = useState<boolean>(false); // Added feature toggle
+  const [isFeatureEnabled] = useState<boolean>(true); // Added feature toggle
   const currentAddress = useCurrentAddress();
   const [loading, setLoading] = useState(false);
   const [raffleConfig, setRaffleConfig] = useState<any>(null);
