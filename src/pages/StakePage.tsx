@@ -101,6 +101,7 @@ export default function StakePage() {
   const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [messageText, setMessageText] = useState("");
   const [justStaked, setJustStaked] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
   const currentAddress = useCurrentAddress();
   const connectionStatus = useCurrentWallet();
   const { width, height } = useWindowSize();
@@ -119,6 +120,34 @@ export default function StakePage() {
 
   const { checkSessionKey, createSession } = useSessionKey();
 
+  const initSessionForNewAddress = async () => {
+    try {
+      
+      // 清除旧的 Session Key
+      localStorage.removeItem('rooch_session_key');
+      localStorage.removeItem('rooch_session_expiry');
+      
+      // 立即创建新的 Session Key
+      setIsCreatingSession(true);
+      const success = await createSession();
+      if (!success) {
+        setMessageType("error");
+        setMessageText("创建 Session Key 失败，请确保有足够的 RGas");  
+        setMessageOpen(true);
+      }
+      return success;
+    } catch (error) {
+      console.error('初始化新地址的 Session Key 失败:', error);
+      setMessageType("error");
+      setMessageText("网络错误，请刷新页面重试");
+      setMessageOpen(true);
+      return false;
+    } finally {
+      setIsCreatingSession(false);
+    }
+  };
+
+  
   const fetchPoolInfo = async () => {
     try {
       const [poolData, projectNameData] = await Promise.all([
@@ -135,43 +164,43 @@ export default function StakePage() {
   const fetchUserInfo = async () => {
     console.log("stake currentAddress", currentAddress);
     if (!currentAddress) return;
-
-    // 检查 session key 是否有效
-    const hasValidSession = await checkSessionKey();
-    if (!hasValidSession) {
-      const success = await createSession();
-      if (!success) {
-        setMessageType("error");
-        setMessageText("RGas 不足");
-        setMessageOpen(true);
-        return;
-      } 
-    }
-
-    // session key 已确认有效，继续获取用户信息
+  
     try {
-      await UpdateGrowVotes();
+      const hasValidSession = await checkSessionKey();
+      if (!hasValidSession) {
+          console.log("Session creation in progress, skipping...");
+          return;
+        }
+    
+        await UpdateGrowVotes();
       const stakeData = await GetStakeInfo();
       console.log("stakeData", stakeData);
-      setStakeInfo(stakeData);
-      const stake_grow_votes = Number(stakeData?.stake_grow_votes || 0);
-      const fate_grow_votes = Number(stakeData?.fate_grow_votes || 0);
-      setHasVotes(Boolean(stake_grow_votes || fate_grow_votes));
+      
+      if (stakeData) {
+        setStakeInfo(stakeData);
+        // 同时检查两种投票类型
+        const stake_grow_votes = Number(stakeData?.stake_grow_votes || 0);
+        const fate_grow_votes = Number(stakeData?.fate_grow_votes || 0);
+        setHasVotes(Boolean(stake_grow_votes || fate_grow_votes));
+      } else {
+        setStakeInfo(null);
+        setHasVotes(false);
+      }
       } catch (error) {
       console.error('get user stake info failed:', error);
       setStakeInfo(null);
-      setHasVotes(false); // 明确设置为未投票
+      setHasVotes(false); 
     }
   };
 
-  const refreshStakeInfo = async () => {
-    try {
-      const stakeData = await GetStakeInfo();
-      setStakeInfo(stakeData);
-    } catch (error) {
-      console.error('refresh stake info failed:', error);
-    }
-  };
+  // const refreshStakeInfo = async () => {
+  //   try {
+  //     const stakeData = await GetStakeInfo();
+  //     setStakeInfo(stakeData);
+  //   } catch (error) {
+  //     console.error('refresh stake info failed:', error);
+  //   }
+  // };
 
   const fetchFateBalance = async () => {
     if (!currentAddress || !client) return;
@@ -195,25 +224,36 @@ export default function StakePage() {
 
   useEffect(() => {
     if (currentAddress) {
+    setStakeInfo(null);
+    setHasVotes(null);
+    
+    // 先创建 Session Key，c成功再获取数据
+    initSessionForNewAddress().then(success => {
+      if (success) {
+        fetchUserInfo();
+        fetchFateBalance();
+      }
+    });
+
+    const refreshInterval = setInterval(() => {
       fetchUserInfo();
-      fetchFateBalance();
-  
-      const refreshInterval = setInterval(() => {
-        refreshStakeInfo(); // 只刷新 stakeInfo，包括 accumulated_fate
-      }, 30000); // 30000ms = 30 seconds
-  
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible') {
-          refreshStakeInfo();
-        }
-      };
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-  
-      return () => {
-        clearInterval(refreshInterval);
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      };
-    }
+    }, 30000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUserInfo();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(refreshInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  } else {
+    setStakeInfo(null);
+    setHasVotes(null);
+  }
   }, [currentAddress]);
 
   useEffect(() => {
