@@ -23,7 +23,6 @@ const Card = styled(motion.div)`
   transition: all 0.3s ease;
   cursor: pointer;
   animation: ${float} 6s ease-in-out infinite;
-  
   &:hover {
     transform: translateY(-5px);
     background: rgba(255, 255, 255, 0.25);
@@ -106,8 +105,8 @@ export function GridNavigation({
   defaultHeight = '180px',
 }: GridNavigationProps) {
   return (
-    <div style={{ width: '100%', position: 'relative', boxSizing: 'border-box', overflow: 'hidden' }}>
-      <Grid container spacing={3} className="mb-8" sx={{ width: '100%', margin: '0 auto', maxWidth: 'none' }}>
+    <div style={{ width: '100%', position: 'relative', boxSizing: 'border-box', overflow: 'visible' }}>
+      <Grid container spacing={3} className="mb-8" sx={{ width: '100%', margin: '0 auto', maxWidth: 'none', overflow: 'visible' }}>
         {cards.map((card, index) => (
           <Grid 
             item 

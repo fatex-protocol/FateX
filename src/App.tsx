@@ -219,7 +219,8 @@ function App() {
           zIndex: 1,
           backdropFilter: 'blur(10px)',
           backgroundColor: 'rgba(255, 255, 255, 0.3)',
-          transition: 'backdrop-filter 0.3s ease'
+          transition: 'backdrop-filter 0.3s ease',
+          overflow: 'visible'
         }}
       >
         <Stack 
@@ -231,11 +232,13 @@ function App() {
             width: '100%',
             position: 'relative',
             overflow: 'visible',
-            padding: '0 16px',
+            padding: '0',
+            maxWidth: '1440px',
+            margin: '0 auto'
           }}
         >
           <div className="navigation-wrapper" style={{ width: '100%' }}>
-            <GridNavigation cards={navigationCards} defaultHeight="550px" fullWidth={false} />
+            <GridNavigation cards={navigationCards} defaultHeight="auto" fullWidth={false} />
           </div>
         </Stack>
       </Container>
